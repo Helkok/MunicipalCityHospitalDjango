@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Врачи
+{% endblock %}
+
+{% block content %}
+  {% for doctor in page_obj %}
+    <article class="mb-5">
+      {% include "includes/doctor_card.html" with doctor=doctor %}
+    </article>
+  {% endfor %}
+  {% include "includes/paginator.html" %}
+{% endblock %}

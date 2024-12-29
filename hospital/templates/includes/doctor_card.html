@@ -1,0 +1,25 @@
+<div class="col d-flex justify-content-center">
+  <div class="card" style="width: 40rem;">
+    <div class="card-body">
+      {% if doctor.image %}
+        <a href="{{ doctor.image.url }}" target="_blank">
+          <img class="border-3 rounded img-fluid img-thumbnail mb-2 mx-auto d-block" src="{{ doctor.image.url }}">
+        </a>
+      {% endif %}
+      <h5 class="card-title">{{ doctor.name }}</h5>
+      <h6 class="card-subtitle mb-2 text-muted">
+        <small>
+          {% if not doctor.is_published %}
+            <p class="text-danger">Врач снят с публикации</p>
+          {% endif %}
+          Специализация: {{ doctor.specialization }}<br>
+          Кабинет: {{ doctor.office }}<br>
+        </small>
+      </h6>
+      <!-- Здесь можно добавить краткое описание врача или другую информацию, если она у вас есть -->
+      <a href="{% url 'doctors:detail' doctor.slug %}" class="card-link">Подробнее</a>
+      <!-- Здесь можно добавить ссылку на расписание врача -->
+      <!-- <a href="#" class="card-link text-muted">Расписание</a> -->
+    </div>
+  </div>
+</div>

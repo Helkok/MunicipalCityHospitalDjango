@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+  {{ doctor.name }} | {{ doctor.specialization }}
+{% endblock %}
+
+{% block content %}
+  <div class="col d-flex justify-content-center">
+    <div class="card" style="width: 40rem;">
+      <div class="card-body">
+        {% if doctor.image %}
+          <a href="{{ doctor.image.url }}" target="_blank">
+            <img class="border-3 rounded img-fluid img-thumbnail mb-2 mx-auto d-block" src="{{ doctor.image.url }}">
+          </a>
+        {% endif %}
+        <h5 class="card-title">{{ doctor.name }}</h5>
+        <h6 class="card-subtitle mb-2 text-muted">
+          <small>
+            {% if not doctor.is_published %}
+              <p class="text-danger">Врач снят с публикации админом</p>
+            {% endif %}
+            Специализация: {{ doctor.specialization }}<br>
+            Кабинет: {{ doctor.office }}<br>
+            <!-- Место для другой информации, например, стажа работы -->
+          </small>
+        </h6>
+        <p class="card-text">
+            <!-- Место для описания врача -->
+        </p>
+        {% if user.is_staff %}
+          <div class="mb-2">
+            <a class="btn btn-sm text-muted" href="{% url 'admin:doctors_doctor_change' doctor.id %}" role="button">
+              Отредактировать
+            </a>
+            <a class="btn btn-sm text-muted" href="{% url 'admin:doctors_doctor_delete' doctor.id %}" role="button">
+              Удалить
+            </a>
+          </div>
+        {% endif %}
+        {# Расписание #}
+        <h4 class="mt-4">Расписание</h4>
+        {% if schedule %}
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">День недели</th>
+                <th scope="col">Время начала</th>
+                <th scope="col">Время окончания</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for entry in schedule %}
+                <tr>
+                  <td>{{ entry.get_day_of_week_display }}</td>
+                  <td>{{ entry.start_time|time:"H:i" }}</td>
+                  <td>{{ entry.end_time|time:"H:i" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p>Расписание не найдено.</p>
+        {% endif %}
+
+        {# Форма записи на приём (заглушка) #}
+        <h4 class="mt-4">Запись на приём</h4>
+        <p>Функционал записи на приём находится в разработке.</p>
+      </div>
+    </div>
+  </div>
+{% endblock %}
