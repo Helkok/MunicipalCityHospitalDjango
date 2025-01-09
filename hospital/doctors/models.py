@@ -4,10 +4,11 @@ from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+from unidecode import unidecode
 
 
 class IsPublished(models.Model):
-    is_published = models.BooleanField(default=True, verbose_name='Обубликован')
+    is_published = models.BooleanField(default=True, verbose_name='Опубликован')
 
     class Meta:
         abstract = True
@@ -18,7 +19,6 @@ class Doctor(IsPublished):
     specialization = models.CharField(max_length=255, verbose_name="Специализация")
     office = models.CharField(max_length=50, verbose_name="Номер кабинета")
     slug = models.SlugField(max_length=50, unique=True, verbose_name="Слаг")
-    is_published = models.BooleanField(default=True, verbose_name='Обубликован')
     image = models.ImageField(
         verbose_name='Изображение',
         null=True,
@@ -34,23 +34,31 @@ class Doctor(IsPublished):
         ordering = ("slug",)
 
 
+@receiver(pre_save, sender=Doctor)
+def create_doctor_slug(sender, instance, *args, **kwargs):
+    if not instance.slug:
+        instance.slug = slugify(unidecode(instance.name))
+
+
 class Appointment(IsPublished):
     STATUS_CHOICES = (
         ('scheduled', 'Запланирован'),
         ('completed', 'Завершен'),
         ('cancelled', 'Отменен'),
     )
+    APPOINTMENT_STATUSES = ['scheduled', 'completed']
+
     doctor = models.ForeignKey(
-        Doctor, 
-        on_delete=models.CASCADE, 
-        verbose_name="Врач", 
-        related_name='appoinments'
+        Doctor,
+        on_delete=models.CASCADE,
+        verbose_name="Врач",
+        related_name='appointments'
     )
     patient = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        verbose_name="Пациент", 
-        related_name='appoinments'
+        User,
+        on_delete=models.CASCADE,
+        verbose_name="Пациент",
+        related_name='appointments'
     )
     date = models.DateField(verbose_name="Дата приёма")
     time = models.TimeField(verbose_name="Время приёма")
@@ -59,19 +67,26 @@ class Appointment(IsPublished):
     def __str__(self):
         return f"Приём у {self.doctor.name} на {self.date} в {self.time}"
 
-    def clean(self):
+    def is_time_available(self):
+        """Проверяет, доступно ли время для записи."""
         conflicting_appointments = Appointment.objects.filter(
+            doctor=self.doctor,
             date=self.date,
             time=self.time,
-            doctor__office=self.doctor.office
+            status__in=self.APPOINTMENT_STATUSES,
+            is_published=True
         ).exclude(pk=self.pk)
 
-        if conflicting_appointments.exists():
-            raise ValidationError("Этот кабинет уже занят на указанное время.")
+        return not conflicting_appointments.exists()
 
     class Meta:
         verbose_name = "Запись на приём"
         verbose_name_plural = "Записи на приём"
+        indexes = [
+            models.Index(fields=['doctor', 'date', 'time']),
+            models.Index(fields=['date', 'time']),
+            models.Index(fields=['status']),
+        ]
 
 
 class Schedule(models.Model):
@@ -98,8 +113,11 @@ class Schedule(models.Model):
         unique_together = [['doctor', 'day_of_week', 'start_time'], ['office', 'day_of_week', 'start_time']]
         verbose_name = "Расписание"
         verbose_name_plural = "Расписания"
-    
+        indexes = [
+            models.Index(fields=['doctor', 'day_of_week']),
+            models.Index(fields=['office', 'day_of_week']),
+        ]
+
     def save(self, *args, **kwargs):
-        if not self.office:
-            self.office = self.doctor.office
+        self.office = getattr(self.doctor, 'office', self.office)
         super().save(*args, **kwargs)

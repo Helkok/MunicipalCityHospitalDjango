@@ -14,17 +14,13 @@
           </li>
           {% if user.is_authenticated %}
             <div class="btn-group" role="group" aria-label="Basic outlined example">
-              {% comment %} <button type="button" class="btn btn-outline-primary"><a class="text-decoration-none text-reset"
-                  href="{% url 'doctors:profile' user.username %}">{{ user.username }}</a></button> {% endcomment %}
-              <button type="button" class="btn btn-outline-primary"><a class="text-decoration-none text-reset"
-                  href="{% url 'logout' %}">Выйти</a></button>
+              <a class="btn btn-outline-primary" href="{% url 'doctors:profile' user.id %}">Мой профиль</a>
+              <a class="btn btn-outline-primary" href="{% url 'logout' %}">Выйти</a>
             </div>
           {% else %}
             <div class="btn-group" role="group" aria-label="Basic outlined example">
-              <button type="button" class="btn btn-outline-primary"><a class="text-decoration-none text-reset"
-                  href="{% url 'login' %}">Войти</a></button>
-              <button type="button" class="btn btn-outline-primary"><a class="text-decoration-none text-reset"
-                  href="{% url 'registration' %}">Регистрация</a></button>
+              <a class="btn btn-outline-primary" href="{% url 'login' %}">Войти</a>
+              <a class="btn btn-outline-primary" href="{% url 'doctors:register' %}">Регистрация</a>
             </div>
           {% endif %}
         </ul>

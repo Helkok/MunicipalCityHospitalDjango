@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Запись на приём к {{ doctor.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <h2 class="mb-4">Запись на приём к {{ doctor.name }}</h2>
+      <form method="post" id="appointmentForm">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="{{ form.date.id_for_label }}" class="form-label">Дата приёма:</label>
+          {{ form.date }}
+          {% if form.date.errors %}
+            <div class="invalid-feedback d-block">{{ form.date.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <label for="{{ form.time.id_for_label }}" class="form-label">Время приёма:</label>
+          <select name="time" id="{{ form.time.id_for_label }}">
+            {% for time_value, time_label in form.fields.time.choices %}
+              <option value="{{ time_value }}">{{ time_label }}</option>
+            {% endfor %}
+          </select>
+          {% if form.time.errors %}
+            <div class="invalid-feedback d-block">{{ form.time.errors }}</div>
+          {% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary">Записаться</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const dateInput = document.getElementById('{{ form.date.id_for_label }}');
+      const timeSelect = document.getElementById('{{ form.time.id_for_label }}');
+      const form = document.getElementById('appointmentForm');
+  
+      dateInput.addEventListener('change', function() {
+        const selectedDate = dateInput.value;
+        const doctorSlug = '{{ doctor.slug }}';
+  
+        fetch(`/doctors/${doctorSlug}/appointment/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: `date=${selectedDate}`,
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.errors) {
+              // Обработка ошибок
+              console.error(data.errors);
+          } else {
+            timeSelect.innerHTML = '';
+            data.times.forEach(time => {
+              const option = document.createElement('option');
+              option.value = time;
+              option.text = time;
+              timeSelect.appendChild(option);
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Ошибка:', error);
+        });
+      });
+    });
+  </script>
+{% endblock %}

@@ -1,28 +1,56 @@
 {% extends "base.html" %}
+
 {% block title %}
   Страница пользователя {{ profile.username }}
 {% endblock %}
+
 {% block content %}
   <h1 class="mb-5 text-center ">Страница пользователя {{ profile.username }}</h1>
   <small>
     <ul class="list-group list-group-horizontal justify-content-center mb-3">
-      <li class="list-group-item text-muted">Имя пользователя: {% if profile.get_full_name %}{{ profile.get_full_name }}{% else %}не указано{% endif %}</li>
-      <li class="list-group-item text-muted">Регистрация: {{ profile.date_joined }}</li>
-      <li class="list-group-item text-muted">Роль: {% if profile.is_staff %}Админ{% else %}Пользователь{% endif %}</li>
+      <li class="list-group-item text-muted">Имя пользователя: {% if profile.get_full_name %}{{ profile.get_full_name }}{% else %}{{ profile.username }}{% endif %}</li>
+      <li class="list-group-item text-muted">Email: {% if profile.email %}{{ profile.email }}{% else %}не указан{% endif %}</li>
+      <li class="list-group-item text-muted">Регистрация: {{ profile.date_joined|date:"d E Y" }}</li>
     </ul>
+    {% if user.is_authenticated and request.user == profile %}
     <ul class="list-group list-group-horizontal justify-content-center">
-      {% if user.is_authenticated and request.user == profile %}
-      <a class="btn btn-sm text-muted" href="{% url 'doctors:edit_profile' %}">Редактировать профиль</a>
-      <a class="btn btn-sm text-muted" href="{% url 'password_change' %}">Изменить пароль</a>
-      {% endif %}
+        <a class="btn btn-sm text-muted" href="{% url 'doctors:edit_profile' %}">Редактировать профиль</a>
+        <a class="btn btn-sm text-muted" href="{% url 'password_change' %}">Изменить пароль</a>
     </ul>
+    {% endif %}
   </small>
   <br>
-  <h3 class="mb-5 text-center">Публикации пользователя</h3>
-  {% for post in page_obj %}
-    <article class="mb-5">
-      {% include "includes/post_card.html" %}
-    </article>
-  {% endfor %}
+  <h3 class="mb-5 text-center">Записи пользователя</h3>
+  {% if appointments %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Врач</th>
+          <th scope="col">Специализация</th>
+          <th scope="col">Дата</th>
+          <th scope="col">Время</th>
+          <th scope="col">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for appointment in appointments %}
+          <tr>
+            <td>{{ appointment.doctor.name }}</td>
+            <td>{{ appointment.doctor.specialization }}</td>
+            <td>{{ appointment.date }}</td>
+            <td>{{ appointment.time }}</td>
+            <td>
+              <form method="get" action="{% url 'doctors:cancel_appointment' appointment.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-danger">Отменить</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>У пользователя нет активных записей.</p>
+  {% endif %}
   {% include "includes/paginator.html" %}
 {% endblock %}

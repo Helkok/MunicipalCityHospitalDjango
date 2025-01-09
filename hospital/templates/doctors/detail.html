@@ -22,11 +22,9 @@
             {% endif %}
             Специализация: {{ doctor.specialization }}<br>
             Кабинет: {{ doctor.office }}<br>
-            <!-- Место для другой информации, например, стажа работы -->
           </small>
         </h6>
         <p class="card-text">
-            <!-- Место для описания врача -->
         </p>
         {% if user.is_staff %}
           <div class="mb-2">
@@ -63,9 +61,17 @@
           <p>Расписание не найдено.</p>
         {% endif %}
 
-        {# Форма записи на приём (заглушка) #}
-        <h4 class="mt-4">Запись на приём</h4>
-        <p>Функционал записи на приём находится в разработке.</p>
+        {# Форма записи на приём #}
+        {% if user.is_authenticated %}
+          <h4 class="mt-4">Запись на приём</h4>
+          <form method="post" action="{% url 'doctors:create_appointment' doctor.slug %}">
+            {% csrf_token %}
+            {{ appointment_form.as_p }}
+            <button type="submit" class="btn btn-primary">Записаться</button>
+          </form>
+        {% else %}
+          <p class="mt-4">Чтобы записаться на приём, пожалуйста, <a href="{% url 'login' %}?next={{ request.path }}">войдите</a> или <a href="{% url 'doctors:register' %}">зарегистрируйтесь</a>.</p>
+        {% endif %}
       </div>
     </div>
   </div>
